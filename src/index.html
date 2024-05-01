@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipeline Run Application</title>
+    <!-- Add CSS for styling if needed -->
+    <style>
+        /* Example CSS for styling images */
+        .logo {
+            max-width: 200px; /* Adjust size as needed */
+            height: auto;
+        }
+        .icon {
+            width: 50px; /* Adjust size as needed */
+            height: 50px; /* Adjust size as needed */
+        }
+        label {
+            font-size: 16px; /* Adjust font size as needed */
+        }
+    </style>
+</head>
+<body>
+    <h1>Pipeline Run Application</h1>
+
+    <!-- Tekton Logo -->
+    <img src="assets/tekton_logo.png" alt="Tekton Logo" class="logo">
+    <br> <!-- Line break added here -->
+
+    <form id="yamlForm">
+        <!-- Generate radio buttons dynamically using JavaScript -->
+    </form>
+
+    <button id="executeBtn">Execute</button>
+
+    <br> <!-- Line break added here -->
+
+    <!-- Openshift Logo -->
+    <img src="assets/openshift_logo.png" alt="Openshift Logo" class="logo">
+
+    <script>
+        fetch('/yamlFiles')
+            .then(response => response.json())
+            .then(data => {
+                const form = document.getElementById('yamlForm');
+                data.forEach(fileName => {
+                    const label = document.createElement('label');
+                    const radioBtn = document.createElement('input');
+                    radioBtn.type = 'radio';
+                    radioBtn.name = 'selectedFileName';
+                    radioBtn.value = fileName;
+                    label.appendChild(radioBtn);
+                    label.appendChild(document.createTextNode(fileName.replace('.yaml', ''))); // Remove .yaml extension
+                    form.appendChild(label);
+                    form.appendChild(document.createElement('br')); // Add line break
+                });
+            });
+
+        document.getElementById('executeBtn').addEventListener('click', () => {
+            const selectedFileName = document.querySelector('input[name="selectedFileName"]:checked');
+            if (!selectedFileName) {
+                alert('Please select a YAML file.');
+                return;
+            }
+            const fileName = selectedFileName.value; // Get the selected file name
+            const selectedFilePath = fileName.endsWith('.yaml') ? fileName : `${fileName}.yaml`; // Add .yaml if not present
+            fetch('/execute', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ selectedFileName: selectedFilePath })
+            })
+            .then(response => response.text())
+            .then(message => alert(message))
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>

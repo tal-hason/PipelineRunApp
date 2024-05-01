@@ -1,0 +1,14 @@
+{
+  "name": "pipelinerunapp",
+  "version": "1.0.0",
+  "description": "an application to run tekton pipelines",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
