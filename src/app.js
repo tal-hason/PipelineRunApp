@@ -54,7 +54,7 @@ app.post('/execute', async (req, res) => {
     const selectedFileName = req.body.selectedFileName;
     const filePath = path.join(__dirname, 'yamlFiles', selectedFileName);
     try {
-        await executeCommand(`oc apply -f ${filePath} -n ${namespace}`);
+        await executeCommand(`oc create -f ${filePath} -n ${namespace}`);
         res.send('Command executed successfully');
     } catch (error) {
         console.error('Error:', error);
