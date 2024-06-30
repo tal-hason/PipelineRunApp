@@ -18,6 +18,9 @@
         label {
             font-size: 16px; /* Adjust font size as needed */
         }
+        #namespaceInput {
+            display: none; /* Initially hide the namespace input box */
+        }
     </style>
 </head>
 <body>
@@ -35,10 +38,25 @@
 
     <br> <!-- Line break added here -->
 
+    <!-- Checkbox to change destination namespace -->
+    <input type="checkbox" id="changeNamespaceCheckbox">
+    <label for="changeNamespaceCheckbox">Change destination namespace</label>
+    <!-- Text input for new destination namespace -->
+    <input type="text" id="namespaceInput" placeholder="Enter new namespace">
+    <br> <!-- Line break added here -->
     <!-- Openshift Logo -->
     <img src="assets/openshift_logo.png" alt="Openshift Logo" class="logo">
 
     <script>
+        // Function to toggle visibility of namespace input box based on checkbox state
+        function toggleNamespaceInput() {
+            const namespaceInput = document.getElementById('namespaceInput');
+            namespaceInput.style.display = this.checked ? 'block' : 'none';
+        }
+
+        // Add event listener to checkbox to toggle namespace input box visibility
+        document.getElementById('changeNamespaceCheckbox').addEventListener('change', toggleNamespaceInput);
+
         fetch('/yamlFiles')
             .then(response => response.json())
             .then(data => {
@@ -64,12 +82,18 @@
             }
             const fileName = selectedFileName.value; // Get the selected file name
             const selectedFilePath = fileName.endsWith('.yaml') ? fileName : `${fileName}.yaml`; // Add .yaml if not present
+            
+            // Get the destination namespace from the input box if the checkbox is checked
+            const namespace = document.getElementById('changeNamespaceCheckbox').checked ? 
+                document.getElementById('namespaceInput').value :
+                '{{NAMESPACE}}'; // Placeholder for namespace, to be replaced by server
+
             fetch('/execute', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ selectedFileName: selectedFilePath })
+                body: JSON.stringify({ selectedFileName: selectedFilePath, namespace: namespace })
             })
             .then(response => response.text())
             .then(message => alert(message))
