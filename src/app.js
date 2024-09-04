@@ -45,13 +45,13 @@ app.post('/execute', (req, res) => {
     const branch = req.body.branch || 'main'; // Default to 'main' if not provided
 
     const filePath = path.join(__dirname, 'yamlFiles', selectedFileName);
-    const tempFilePath = path.join(__dirname, 'yamlFiles', `temp_${selectedFileName}`);
+    const tempFilePath = path.join('/tmp', `temp_${selectedFileName}`);
 
     let yqCommand = '';
     if (branch) {
-        yqCommand = `yq e '.params[1].value = "${branch}"' ${filePath} > ${tempFilePath}`;
+        yqCommand = `yq e '.spec.params[1].value = "${branch}"' ${filePath} > ${tempFilePath}`;
     } else {
-        // If no branch is specified, copy the file without changes
+        // If no branch is specified, copy the file to /tmp without changes
         exec(`cp ${filePath} ${tempFilePath}`, (err) => {
             if (err) {
                 console.error('Error copying file:', err);

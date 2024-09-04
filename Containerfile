@@ -25,10 +25,10 @@ RUN tar xvf openshift-client-linux.tar.gz --no-same-owner && rm openshift-client
 # Download and install yq
 ADD https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 .
 RUN mv yq_linux_amd64 yq && chmod +x yq
-
+LABEL org.opencontainers.image.source https://github.com/tal-hason/PipelineRunApp
 # Runner stage
 FROM registry.access.redhat.com/ubi9/nodejs-20-minimal AS runner
-
+LABEL org.opencontainers.image.source https://github.com/tal-hason/PipelineRunApp
 # Set working directory
 WORKDIR /app
 
@@ -41,3 +41,4 @@ USER 1001
 
 # Command to start the application
 CMD ["node", "app.js"]
+
