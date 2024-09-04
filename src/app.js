@@ -41,18 +41,52 @@ app.get('/', (req, res) => {
 // Execute command
 app.post('/execute', (req, res) => {
     const selectedFileName = req.body.selectedFileName;
-    const namespace = req.body.namespace || process.env.NAMESPACE || 'default'; // Default to 'default' if NAMESPACE is not set
+    const namespace = req.body.namespace || process.env.NAMESPACE || 'default';
+    const branch = req.body.branch || 'main'; // Default to 'main' if not provided
+
     const filePath = path.join(__dirname, 'yamlFiles', selectedFileName);
-    exec(`oc create -f ${filePath} -n ${namespace}`, (err, stdout, stderr) => {
+    const tempFilePath = path.join(__dirname, 'yamlFiles', `temp_${selectedFileName}`);
+
+    let yqCommand = '';
+    if (branch) {
+        yqCommand = `yq e '.params[1].value = "${branch}"' ${filePath} > ${tempFilePath}`;
+    } else {
+        // If no branch is specified, copy the file without changes
+        exec(`cp ${filePath} ${tempFilePath}`, (err) => {
+            if (err) {
+                console.error('Error copying file:', err);
+                res.status(500).send(err.message || 'Unknown error occurred while copying file');
+                return;
+            }
+            executeOcCreate();
+        });
+        return;
+    }
+
+    exec(yqCommand, (err, stdout, stderr) => {
         if (err) {
-            console.error('Error:', err);
+            console.error('Error during yq command:', err);
             console.error('stderr:', stderr);
-            res.status(500).send(err.message || stderr || 'Unknown error occurred');
+            res.status(500).send(err.message || stderr || 'Unknown error occurred during yq');
             return;
         }
-        console.log('stdout:', stdout);
-        res.send('Command executed successfully');
+
+        executeOcCreate();
     });
+
+    function executeOcCreate() {
+        exec(`oc create -f ${tempFilePath} -n ${namespace}`, (err, stdout, stderr) => {
+            if (err) {
+                console.error('Error during oc command:', err);
+                console.error('stderr:', stderr);
+                res.status(500).send(err.message || stderr || 'Unknown error occurred during oc');
+                return;
+            }
+
+            console.log('stdout:', stdout);
+            res.send('Command executed successfully');
+        });
+    }
 });
 
 // Health check endpoint for readiness probe

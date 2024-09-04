@@ -4,22 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pipeline Run Application</title>
-    <!-- Add CSS for styling if needed -->
     <style>
-        /* Example CSS for styling images */
         .logo {
-            max-width: 200px; /* Adjust size as needed */
+            max-width: 200px;
             height: auto;
         }
         .icon {
-            width: 50px; /* Adjust size as needed */
-            height: 50px; /* Adjust size as needed */
+            width: 50px;
+            height: 50px;
         }
         label {
-            font-size: 16px; /* Adjust font size as needed */
+            font-size: 16px;
         }
-        #namespaceInput {
-            display: none; /* Initially hide the namespace input box */
+        #namespaceInput, #branchInput {
+            display: none;
         }
     </style>
 </head>
@@ -28,34 +26,42 @@
 
     <!-- Tekton Logo -->
     <img src="assets/tekton_logo.png" alt="Tekton Logo" class="logo">
-    <br> <!-- Line break added here -->
+    <br>
 
-    <form id="yamlForm">
-        <!-- Generate radio buttons dynamically using JavaScript -->
-    </form>
+    <form id="yamlForm"></form>
 
     <button id="executeBtn">Execute</button>
-
-    <br> <!-- Line break added here -->
+    <br>
 
     <!-- Checkbox to change destination namespace -->
     <input type="checkbox" id="changeNamespaceCheckbox">
     <label for="changeNamespaceCheckbox">Change destination namespace</label>
-    <!-- Text input for new destination namespace -->
     <input type="text" id="namespaceInput" placeholder="Enter new namespace">
-    <br> <!-- Line break added here -->
+    <br>
+
+    <!-- Checkbox to enter a branch -->
+    <input type="checkbox" id="cloneBranchCheckbox">
+    <label for="cloneBranchCheckbox">Clone from branch</label>
+    <input type="text" id="branchInput" placeholder="Enter branch name">
+    <br>
+
     <!-- Openshift Logo -->
     <img src="assets/openshift_logo.png" alt="Openshift Logo" class="logo">
 
     <script>
-        // Function to toggle visibility of namespace input box based on checkbox state
-        function toggleNamespaceInput() {
-            const namespaceInput = document.getElementById('namespaceInput');
-            namespaceInput.style.display = this.checked ? 'block' : 'none';
+        function toggleInputVisibility(checkboxId, inputId) {
+            const checkbox = document.getElementById(checkboxId);
+            const input = document.getElementById(inputId);
+            input.style.display = checkbox.checked ? 'block' : 'none';
         }
 
-        // Add event listener to checkbox to toggle namespace input box visibility
-        document.getElementById('changeNamespaceCheckbox').addEventListener('change', toggleNamespaceInput);
+        document.getElementById('changeNamespaceCheckbox').addEventListener('change', () => {
+            toggleInputVisibility('changeNamespaceCheckbox', 'namespaceInput');
+        });
+
+        document.getElementById('cloneBranchCheckbox').addEventListener('change', () => {
+            toggleInputVisibility('cloneBranchCheckbox', 'branchInput');
+        });
 
         fetch('/yamlFiles')
             .then(response => response.json())
@@ -68,9 +74,9 @@
                     radioBtn.name = 'selectedFileName';
                     radioBtn.value = fileName;
                     label.appendChild(radioBtn);
-                    label.appendChild(document.createTextNode(fileName.replace('.yaml', ''))); // Remove .yaml extension
+                    label.appendChild(document.createTextNode(fileName.replace('.yaml', '')));
                     form.appendChild(label);
-                    form.appendChild(document.createElement('br')); // Add line break
+                    form.appendChild(document.createElement('br'));
                 });
             });
 
@@ -80,20 +86,23 @@
                 alert('Please select a YAML file.');
                 return;
             }
-            const fileName = selectedFileName.value; // Get the selected file name
-            const selectedFilePath = fileName.endsWith('.yaml') ? fileName : `${fileName}.yaml`; // Add .yaml if not present
-            
-            // Get the destination namespace from the input box if the checkbox is checked
-            const namespace = document.getElementById('changeNamespaceCheckbox').checked ? 
+            const fileName = selectedFileName.value;
+            const selectedFilePath = fileName.endsWith('.yaml') ? fileName : `${fileName}.yaml`;
+
+            const namespace = document.getElementById('changeNamespaceCheckbox').checked ?
                 document.getElementById('namespaceInput').value :
-                '{{NAMESPACE}}'; // Placeholder for namespace, to be replaced by server
+                '{{NAMESPACE}}';
+
+            const branch = document.getElementById('cloneBranchCheckbox').checked ?
+                document.getElementById('branchInput').value :
+                '';
 
             fetch('/execute', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ selectedFileName: selectedFilePath, namespace: namespace })
+                body: JSON.stringify({ selectedFileName: selectedFilePath, namespace: namespace, branch: branch })
             })
             .then(response => response.text())
             .then(message => alert(message))
